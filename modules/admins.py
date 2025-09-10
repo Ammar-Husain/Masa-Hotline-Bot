@@ -174,16 +174,15 @@ async def set_staff_chat_handler(
             "Please give the bot the right to send messages in staff group and try again ❌\n\n"
             "<b>Bot current settings</b>:\n\n"
             f"{await current_settings(client, db_client)}",
-            reply_markup=admin_keyboard(is_super_admin)
+            reply_markup=admin_keyboard(is_super_admin),
         )
         return
-
 
     await staff_chat_message.reply(
         f"{staff_chat.title} has been set as the new staff chat ✅\n\n"
         "<b>Bot current settings</b>:\n\n"
         f"{await current_settings(client, db_client)}",
-        reply_markup=admin_keyboard(is_super_admin)
+        reply_markup=admin_keyboard(is_super_admin),
     )
 
 
@@ -479,13 +478,37 @@ async def statistics_handler(
     form_fillers_count = db_client.masaBotDB.users.count_documents(
         {"filled_form": True}
     )
+    form_fillers = db_client.masaBotDB.users.find({"filled_form": True})
+    form_non_fillers = db_client.masaBotDB.users.find({"filled_form": False})
+
+    form_fillers_user_names = (
+        ", ".join(
+            [
+                f"<b>#{user['serial_number']}{' ('+user['custom_name']+')' if user['custom_name'] else ''}</b>"
+                for user in form_fillers
+            ]
+        )
+        or "No users."
+    )
+
+    form_non_fillers_user_names = (
+        ", ".join(
+            [
+                f"<b>#{user['serial_number']}{' ('+user['custom_name']+')' if user['custom_name'] else ''}</b>"
+                for user in form_non_fillers
+            ]
+        )
+        or "No users"
+    )
 
     stats_report_text = (
         "<b><u>Hotline Statistics:</u></b>\n\n"
         f"<b>Users who started the bot</b>: {users_count}\n"
         f"<b>Users who filled the form</b>: {form_fillers_count}\n"
         f"<b>Messages sent by the staff to bot users</b>: {stats['staff_replies_counter']}\n"
-        f"<b>Messages sent by bot users to staff</b>: {stats['users_messages_counter']}"
+        f"<b>Messages sent by bot users to staff</b>: {stats['users_messages_counter']}\n\n\n"
+        f"<b>Users who filled to form</b>: {form_fillers_user_names}.\n\n"
+        f"<b>Users who didn't fill to form</b>: {form_non_fillers_user_names}."
     )
 
     await callback_query.message.edit_text(

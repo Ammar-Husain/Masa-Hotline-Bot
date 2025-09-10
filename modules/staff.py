@@ -14,7 +14,7 @@ async def reply_handler(client: Client, message: types.Message, db_client: Mongo
             "Please use the reply command like this:\n"
             "/reply <i>serial_number</i> <i>message</i>\n\n"
             "For example:\n"
-            "/reply 1 مرحاباً، يمكنك التواصل مع اختصاصي على الرقم التالي 01xxxxxxx\n"
+            "/reply 1 مرحاباً، يمكنك التواصل مع اختصاصي على الرقم التالي 01xxxxxxx\n\n"
             'this will send:\n"<b>مرحاباً، يمكنك التواصل مع اختصاصي على الرقم التالي 01xxxxxxx</b>"\n to the user with serial number 1.'
         )
 
