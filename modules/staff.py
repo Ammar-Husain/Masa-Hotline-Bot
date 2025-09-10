@@ -14,7 +14,7 @@ async def reply_handler(client: Client, message: types.Message, db_client: Mongo
             "Please use the reply command like this:\n"
             "/reply <i>serial_number</i> <i>message</i>\n\n"
             "For example:\n"
-            "/reply 1 مرحاباً، يمكنك التواصل مع اختصاصي على الرقم التالي 01xxxxxxx\n\n"
+            "/reply 1 مرحباً، يمكنك التواصل مع اختصاصي على الرقم التالي 01xxxxxxx\n\n"
             'this will send:\n"<b>مرحاباً، يمكنك التواصل مع اختصاصي على الرقم التالي 01xxxxxxx</b>"\n to the user with serial number 1.'
         )
 
@@ -140,24 +140,27 @@ async def assign_name_handler(
         reply_markup=options_keyboard,
     )
 
-    callback_answer = await client.listen(
-        filters=filters.regex(r"^confirm_assign$|^cancel_assign$"),
-        chat_id=message.chat.id,
-        user_id=message.from_user.id,
-        listener_type=enums.ListenerTypes.CALLBACK_QUERY,
-    )
+    while True:
+        callback_answer = await client.listen(
+            filters=filters.regex(r"^confirm_assign$|^cancel_assign$"),
+            chat_id=message.chat.id,
+            user_id=message.from_user.id,
+            listener_type=enums.ListenerTypes.CALLBACK_QUERY,
+        )
 
-    if callback_answer and callback_answer.data == "confirm_assign":
-        db_client.masaBotDB.users.update_one(
-            {"_id": user_in_db["_id"]}, {"$set": {"custom_name": custom_name}}
-        )
-        await callback_answer.message.edit_text(
-            f"""
-                User #{serial_number} Has been assigned the name {custom_name} succefully ✅
-            """
-        )
-    else:
-        await callback_answer.message.edit_text("Name assignment cancelled ✅")
+        if callback_answer and callback_answer.data == "confirm_assign":
+            db_client.masaBotDB.users.update_one(
+                {"_id": user_in_db["_id"]}, {"$set": {"custom_name": custom_name}}
+            )
+            return await callback_answer.message.edit_text(
+                f"""
+                    User #{serial_number} Has been assigned the name {custom_name} succefully ✅
+                """
+            )
+        else:
+            return await callback_answer.message.edit_text(
+                "Name assignment cancelled ✅"
+            )
 
 
 async def help_handler(message: types.Message):
