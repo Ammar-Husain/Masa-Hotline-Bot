@@ -317,6 +317,7 @@ async def broadcast_handler(
                 reply_markup=back_keyboard(),
                 quote=True,
             )
+            return
 
         else:
             return await back_handler(client, callback_answer, db_client)
