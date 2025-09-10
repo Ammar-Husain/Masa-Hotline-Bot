@@ -57,6 +57,14 @@ async def main() -> None:
     # check config health
     config = db_client.masaBotDB.config.find_one({})
     if not config:
+        config = Config(
+            admins_list=[int(ADMIN_ID)],
+            super_admin_id=int(ADMIN_ID),
+            staff_chat_id=None,
+            assessment_form_link=None,
+            banned_users=[],
+        )
+        db_client.masaBotDB.config.insert_one(config.as_dict())
         try:
             await client.send_message(
                 ADMIN_ID,
@@ -64,17 +72,9 @@ async def main() -> None:
                 "Congratulation, The bot has been started for the first time 🥳\n"
                 "Let's set staff group and assessment form link, please send /start.",
             )
-        except:
-            print("Tell the admin to start the bot!")
-        else:
-            config = Config(
-                admins_list=[int(ADMIN_ID)],
-                super_admin_id=int(ADMIN_ID),
-                staff_chat_id=None,
-                assessment_form_link=None,
-                banned_users=[],
-            )
-            db_client.masaBotDB.config.insert_one(config.as_dict())
+        except Exception as e:
+            await log(client, f"could not message the admin, it says: {e}")
+            await log(client, "Tell the admin to start the bot!")
 
     else:
         admins_list = config["admins_list"]
