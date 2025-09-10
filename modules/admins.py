@@ -23,8 +23,8 @@ def admin_keyboard(is_super_admin: bool = False):
     add_admin_button = types.InlineKeyboardButton("Add an Admin  ➕👤", "add_admin")
 
     # only superadmin can remove other admins
-    remove_admin_button = types.InlineKeyboardButton(
-        "Remove an Admin  ⛔👤", "remove_admin"
+    manage_admins_button = types.InlineKeyboardButton(
+        "Manage Bot Admins 🔧👤", "manage_admins"
     )
 
     statistics_button = types.InlineKeyboardButton(
@@ -38,7 +38,7 @@ def admin_keyboard(is_super_admin: bool = False):
             [broadcast_button],
             [ban_user_button],
             [unban_user_button],
-            [add_admin_button] + ([remove_admin_button] if is_super_admin else []),
+            [add_admin_button] + ([manage_admins_button] if is_super_admin else []),
             [statistics_button],
         ]
     )
@@ -242,7 +242,7 @@ async def set_assesment_form_link_handler(
             is_super_admin = admin.id == super_admin_id
             return await callback_answer.message.edit_text(
                 "New assessment form link has been set succefully ✅\n\n",
-                reply_markup=back_keyboard(),
+                reply_markup=back_keyboard(is_super_admin),
             )
 
         elif callback_answer.data == "cancel_assessment_form_set":
@@ -407,7 +407,7 @@ async def add_admin_handler(
             return
 
 
-async def remove_admin_button_handler(
+async def manage_admins_handler(
     client: Client, callback_query: types.CallbackQuery, db_client: MongoClient
 ):
     config = db_client.masaBotDB.config.find_one(
@@ -423,7 +423,7 @@ async def remove_admin_button_handler(
     admins_list_text = "<b><u>Bot admins:</u></b>\n\n" + "\n\n".join(
         [
             (
-                f"{'@'+admin.username if admin.username else admin.first_name}\t\t /remove_admin_{admin.id}"
+                f"{'@'+admin.username if admin.username else admin.first_name}:\n/remove_admin_{admin.id}\n/transfer_super_admin_{admin.id}"
                 if admin.id != callback_query.from_user.id
                 else f"{'@'+admin.username if admin.username else admin.first_name} (You)"
             )
@@ -464,7 +464,81 @@ async def remove_admin_handler(message: types.Message, db_client: MongoClient):
         {}, {"$pull": {"admins_list": admin_to_remove_id}}
     )
 
-    await message.reply(f"Admin Has been removed.")
+    await message.reply(f"Admin removed succefully ✅.")
+
+
+async def transfer_super_admin_handler(
+    client: Client, message: types.Message, db_client: MongoClient
+):
+    config = db_client.masaBotDB.config.find_one(
+        {}, {"admins_list": 1, "super_admin_id": 1}
+    )
+    admins_ids_list, super_admin_id = config["admins_list"], config["super_admin_id"]
+
+    if not message.from_user.id == super_admin_id:
+        return
+
+    admin_to_promote_id = message.text.split("/transfer_super_admin_")[-1]
+    if not admin_to_promote_id.isnumeric():
+        await message.reply("Invalid admin id.")
+        return
+
+    admin_to_promote_id = int(admin_to_promote_id)
+    if admin_to_promote_id not in admins_ids_list:
+        await message.reply("There is no an admin with the specified id.")
+        return
+
+    if admin_to_promote_id == message.from_user.id:
+        return await message.reply("You are already the superadmin.")
+
+    confirm_button = types.InlineKeyboardButton(
+        "Confirm ✅", callback_data="confirm_super_admin_transfer"
+    )
+    cancel_button = types.InlineKeyboardButton(
+        "Cancel ❌", callback_data="cancel_super_admin_transfer"
+    )
+    options_keyboard = types.InlineKeyboardMarkup([[confirm_button], [cancel_button]])
+
+    try:
+        new_superadmin = await client.get_users(admin_to_promote_id)
+        new_superadmin_name = (
+            "@" + new_superadmin.username
+            if new_superadmin.username
+            else f"{new_superadmin.first_name} {new_superadmin.last_name or ''}"
+        )
+    except:
+        new_superadmin_name = "This Admin"
+
+    await message.reply(
+        f"Are you sure you want to transfer the SuperAdmin powers to {new_superadmin_name}?\n\n"
+        "This will make you a regular admin and he/she will be able to remove you from administiration.",
+        reply_markup=options_keyboard,
+    )
+
+    while True:
+        try:
+            callback_answer = await client.listen(
+                filters=filters.regex(
+                    r"^confirm_super_admin_transfer$|^cancel_super_admin_transfer$"
+                ),
+                chat_id=message.from_user.id,
+                user_id=message.from_user.id,
+                listener_type=enums.ListenerTypes.CALLBACK_QUERY,
+            )
+        except (errors.ListenerStopped, asyncio.TimeoutError):
+            return
+
+        if callback_answer and callback_answer.data == "confirm_super_admin_transfer":
+            db_client.masaBotDB.config.update_one(
+                {}, {"$set": {"super_admin_id": admin_to_promote_id}}
+            )
+            return await callback_answer.message.edit_text(
+                f"Superadmin powers transferred succefully ✅",
+                reply_markup=back_keyboard(),
+            )
+
+        elif callback_answer.data == "cancel_super_admin_transfer":
+            return await back_handler(client, callback_answer, db_client)
 
 
 async def statistics_handler(
@@ -482,7 +556,7 @@ async def statistics_handler(
     form_non_fillers = db_client.masaBotDB.users.find({"filled_form": False})
 
     form_fillers_user_names = (
-        ", ".join(
+        ".\n".join(
             [
                 f"<b>#{user['serial_number']}{' ('+user['custom_name']+')' if user['custom_name'] else ''}</b>"
                 for user in form_fillers
@@ -492,7 +566,7 @@ async def statistics_handler(
     )
 
     form_non_fillers_user_names = (
-        ", ".join(
+        ".\n".join(
             [
                 f"<b>#{user['serial_number']}{' ('+user['custom_name']+')' if user['custom_name'] else ''}</b>"
                 for user in form_non_fillers
@@ -503,12 +577,12 @@ async def statistics_handler(
 
     stats_report_text = (
         "<b><u>Hotline Statistics:</u></b>\n\n"
-        f"<b>Users who started the bot</b>: {users_count}\n"
-        f"<b>Users who filled the form</b>: {form_fillers_count}\n"
-        f"<b>Messages sent by the staff to bot users</b>: {stats['staff_replies_counter']}\n"
-        f"<b>Messages sent by bot users to staff</b>: {stats['users_messages_counter']}\n\n\n"
-        f"<b>Users who filled to form</b>: {form_fillers_user_names}.\n\n"
-        f"<b>Users who didn't fill to form</b>: {form_non_fillers_user_names}."
+        f"<b>Users who started the bot</b>: {users_count}.\n"
+        f"<b>Users who filled the form</b>: {form_fillers_count}.\n"
+        f"<b>Messages sent by the staff to bot users</b>: {stats['staff_replies_counter']}.\n"
+        f"<b>Messages sent by bot users to staff</b>: {stats['users_messages_counter']}.\n\n\n"
+        f"<b>Users who filled to form</b>:\n{form_fillers_user_names}.\n\n"
+        f"<b>Users who didn't fill to form</b>:\n{form_non_fillers_user_names}."
     )
 
     await callback_query.message.edit_text(

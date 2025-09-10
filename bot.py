@@ -195,15 +195,23 @@ async def main() -> None:
     async def _(client, callback_query):
         await admins.add_admin_handler(client, callback_query, db_client)
 
-    @client.on_callback_query(admin_chat_filter & filters.regex("^remove_admin$"))
+    @client.on_callback_query(admin_chat_filter & filters.regex("^manage_admins$"))
     async def _(client, callback_query):
-        await admins.remove_admin_button_handler(client, callback_query, db_client)
+        await admins.manage_admins_handler(client, callback_query, db_client)
 
     @client.on_message(
         admin_chat_filter & filters.private & filters.regex(r"^/remove_admin_\d+$")
     )
     async def _(client, message):
         await admins.remove_admin_handler(message, db_client)
+
+    @client.on_message(
+        admin_chat_filter
+        & filters.private
+        & filters.regex(r"^/transfer_super_admin_\d+$")
+    )
+    async def _(client, message):
+        await admins.transfer_super_admin_handler(client, message, db_client)
 
     @client.on_callback_query(admin_chat_filter & filters.regex("^statistics$"))
     async def _(client, callback_query):
