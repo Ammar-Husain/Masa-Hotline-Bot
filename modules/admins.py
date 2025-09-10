@@ -582,8 +582,8 @@ async def statistics_handler(
         f"<b>Users who filled the form</b>: {form_fillers_count}.\n"
         f"<b>Messages sent by the staff to bot users</b>: {stats['staff_replies_counter']}.\n"
         f"<b>Messages sent by bot users to staff</b>: {stats['users_messages_counter']}.\n\n\n"
-        f"<b>Users who filled to form</b>:\n{form_fillers_user_names}.\n\n"
-        f"<b>Users who didn't fill to form</b>:\n{form_non_fillers_user_names}."
+        f"<b>Users who filled the form</b>:\n{form_fillers_user_names}.\n\n"
+        f"<b>Users who didn't fill the form</b>:\n{form_non_fillers_user_names}."
     )
 
     await callback_query.message.edit_text(
