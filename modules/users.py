@@ -216,9 +216,7 @@ async def contact_staff_handler(
         reply_markup=back_keyboard(),
     )
     try:
-        message_to_staff = await client.listen(
-            filters.text, chat_id=user.id, user_id=user.id
-        )
+        message_to_staff = await client.listen(chat_id=user.id, user_id=user.id)
     except (errors.ListenerStopped, asyncio.TimeoutError):
         return
     if not message_to_staff:
