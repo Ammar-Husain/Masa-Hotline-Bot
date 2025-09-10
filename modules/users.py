@@ -88,7 +88,7 @@ async def start_handler(
             "إذا كنت تحتاج إلى المساعدة فنحن هنا دائماً لأجلك.\n\n"
             "الرجاء ملء الفورم التالي لمساعدتنا في معرفة ما تمرّ به وكيف يمكننا مساعدتك 😇\n"
             f"{config["assessment_form_link"]}\n\n"
-            f"<b><u>your serial number is:</u></b> {user_serial}\n\n\n"
+            f"<b><u>your serial number is:</u></b> {user_serial}.\n\n\n"
             "نحيطكم علماً بأن هويتكم وجميع البيانات التي تقدمونها يتم التعامل بها بمجهولية تامة ولا يستطيع حتى العاملون في MASA معرفة هوية مقدمي الطلبات 👤.",
             reply_markup=filled_form_keyboard(),
         )
@@ -99,7 +99,7 @@ async def start_handler(
         await message.reply(
             "مرحباً, الرجاء ملء الفورم التالي لمساعدتنا في معرفة ما تمرّ به وكيف يمكننا مساعدتك 😇\n"
             f"{config["assessment_form_link"]}\n\n"
-            f"<b><u>your serial number is:</u></b> {user_in_db["serial_number"]}",
+            f"<b><u>your serial number is:</u></b> {user_in_db["serial_number"]}.",
             reply_markup=filled_form_keyboard(),
         )
         return
@@ -212,7 +212,7 @@ async def contact_staff_handler(
     user = callback_query.from_user
 
     await callback_query.message.edit_text(
-        "الرجاء إرسال رسالتك النصية وسيتم تحويلها إلى فريق MASA بسرية 😇",
+        "الرجاء إرسال رسالتك وسيتم تحويلها إلى فريق MASA بسرية 😇",
         reply_markup=back_keyboard(),
     )
     try:
@@ -228,11 +228,10 @@ async def contact_staff_handler(
     cancel_button = types.InlineKeyboardButton("إلغاء ❌", callback_data="user_back")
     options_keyboard = types.InlineKeyboardMarkup([[confirm_button], [cancel_button]])
 
+    await message_to_staff.copy(user.id)
     await client.send_message(
         user.id,
-        "الرجاء التأكيد بإنك ترغب بإرسال:\n\n"
-        f'"<b>{message_to_staff.text}"</b>\n\n'
-        "إلى العاملين في فريق MASA 😇",
+        "الرجاء التأكيد بإنك ترغب بإرسال الرسالة السابقة إلى فريق MASA 😇",
         reply_markup=options_keyboard,
     )
 
@@ -257,13 +256,17 @@ async def contact_staff_handler(
         return await back_handler(client, callback_answer, db_client)
 
     user_name = f"<b>#{user_in_db['serial_number']}{' ('+user_in_db['custom_name']+')' if user_in_db['custom_name'] else ''}</b>"
-    message_text = (
-        f"Hey MASA staff!, User {user_name} sended this message to you!\n\n"
-        f'<b>"{message_to_staff.text}"</b>\n\n'
-        "you can reply to him using the /reply command."
-    )
+
     try:
-        await client.send_message(config["staff_chat_id"], message_text)
+        await client.send_message(
+            config["staff_chat_id"],
+            f"<b>Hey MASA staff!, User {user_name} sended this message to you:</b>",
+        )
+        await message_to_staff.copy(config["staff_chat_id"])
+        await client.send_message(
+            config["staff_chat_id"], f"You can reply to him with the reply command!"
+        )
+
     except Exception as e:
         print(f"Bot wasn't able to send message in staff chat, it says: {e}")
         callback_answer.message.edit_text(

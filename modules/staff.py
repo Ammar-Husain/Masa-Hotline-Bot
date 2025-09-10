@@ -5,8 +5,10 @@ from pyrogram import Client, enums, errors, filters, types
 
 
 async def reply_handler(client: Client, message: types.Message, db_client: MongoClient):
+    bot_username = client.me.username
+    cleaned_text = message.text.replace(f"@{bot_username}", "")
     pattern = r"(?s)/reply (\d+)\s+(.+)"
-    text_match = re.match(pattern, message.text)
+    text_match = re.match(pattern, cleaned_text)
     if not text_match:
         return await message.reply(
             "Please use the reply command like this:\n"
@@ -90,12 +92,15 @@ async def reply_handler(client: Client, message: types.Message, db_client: Mongo
 async def assign_name_handler(
     client: Client, message: types.Message, db_client: MongoClient
 ):
+    bot_username = client.me.username
+    cleaned_text = message.text.replace(f"@{bot_username}", "")
+
     pattern = r"/assign (\d+) (.+)"
-    text_match = re.match(pattern, message.text)
+    text_match = re.match(pattern, cleaned_text)
     if not text_match:
         return await message.reply(
             "Please use the assign command like this:\n"
-            "/assign <i>serial_number</i> </i>name</i>\n\n"
+            "/assign <i>serial_number</i> <i>name</i>\n\n"
             "For example:\n"
             "/assign 1 PTSD + OCD\n"
             "this will assign the name <b>PTSD + OCD</b> to the user with the serial number 1."
