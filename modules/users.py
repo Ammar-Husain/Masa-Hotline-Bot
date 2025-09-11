@@ -13,8 +13,6 @@ if not is_production or is_production == "0":
 
     dotenv.load_dotenv()
 
-GA_CHAT_ID = int(os.getenv("GA_CHAT_ID", "0"))
-
 
 def user_keyboard():
     contact_staff_button = types.InlineKeyboardButton(
@@ -64,14 +62,18 @@ async def start_handler(
         return await message.reply("عذراً، البوت تحت الصيانة الرجاء المحاولة لاحقاً 😇.")
 
     # general assembly chat membership check is required
-    if GA_CHAT_ID:
+    if config["ga_chat_id"]:
         try:
-            await client.get_chat_member(GA_CHAT_ID, user.id)
+            await client.get_chat_member(config["ga_chat_id"], user.id)
         except errors.UserNotParticipant:
             await message.reply(
-                """عذراً ❌، هذه الخدمة متاحة حالياً لطلبة كلية الطب جامعة الخرطوم، إذا كنت طالباّ في كلية الطب جامعة الخرطوم الرجاء التأكد بإنك تراسل البوت عن طريق حسابك الموجود في مجموعة الجمعية العمومية لرابطة طلاب كلية الطب جامعة الخرطوم."""
+                """عذراً ❌، هذه الخدمة متاحة حالياً لطلّاب كلية الطب جامعة الخرطوم، إذا كنت طالباّ في كلية الطب جامعة الخرطوم الرجاء التأكد بإنك تراسل البوت عن طريق حسابك الموجود في مجموعة الجمعية العمومية لرابطة طلاب كلية الطب جامعة الخرطوم."""
             )
             return
+        except (errors.ChannelIdInvalid, errors.ChatIdInvalid):
+            await log(
+                "Please insure the bot is still in the general assembly group, it wans't able to check a user membership."
+            )
         except Exception as e:
             await log(client, str(e))
 
@@ -300,9 +302,9 @@ async def back_handler(
         return
 
     # general assembly chat membership check is required
-    if GA_CHAT_ID:
+    if config["ga_chat_id"]:
         try:
-            await client.get_chat_member(ga_chat_id, user.id)
+            await client.get_chat_member(config["ga_chat_id"], user.id)
         except Exception as e:
             return
 

@@ -60,9 +60,6 @@ async def main() -> None:
         config = Config(
             admins_list=[int(ADMIN_ID)],
             super_admin_id=int(ADMIN_ID),
-            staff_chat_id=None,
-            assessment_form_link=None,
-            banned_users=[],
         )
         db_client.masaBotDB.config.insert_one(config.as_dict())
         try:
@@ -172,6 +169,10 @@ async def main() -> None:
     )
     async def _(client, callback_query):
         await admins.set_assesment_form_link_handler(client, callback_query, db_client)
+
+    @client.on_callback_query(admin_chat_filter & filters.regex("^set_ga_chat$"))
+    async def _(client, callback_query):
+        await admins.set_ga_chat_handler(client, callback_query, db_client)
 
     @client.on_callback_query(admin_chat_filter & filters.regex("^broadcast$"))
     async def _(client, callback_query):

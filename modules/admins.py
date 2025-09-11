@@ -8,8 +8,13 @@ def admin_keyboard(is_super_admin: bool = False):
     set_staff_chat_button = types.InlineKeyboardButton(
         "Set Staff Chat  👥", "set_staff_chat"
     )
+
     set_assesment_form_link_button = types.InlineKeyboardButton(
         "Set Assessment Form Link  📋", "set_assessment_form_link"
+    )
+
+    set_ga_chat_button = types.InlineKeyboardButton(
+        "Set General Assembly Group  👥", "set_ga_chat"
     )
 
     broadcast_button = types.InlineKeyboardButton(
@@ -35,6 +40,7 @@ def admin_keyboard(is_super_admin: bool = False):
         [
             [set_staff_chat_button],
             [set_assesment_form_link_button],
+            [set_ga_chat_button],
             [broadcast_button],
             [ban_user_button],
             [unban_user_button],
@@ -67,6 +73,16 @@ async def current_settings(client: Client, db_client: MongoClient):
     else:
         staff_chat_title = "Not set yet ⚠️"
 
+    if "ga_chat_id" in config and config["ga_chat_id"]:
+        try:
+            ga_chat = await client.get_chat(config["ga_chat_id"])
+            ga_chat_title = ga_chat.title
+        except:
+            ga_chat_title = "Not Accesible."
+
+    else:
+        ga_chat_title = "Not set ⚠️"
+
     assessment_form_link = (
         config["assessment_form_link"]
         if config["assessment_form_link"]
@@ -74,8 +90,9 @@ async def current_settings(client: Client, db_client: MongoClient):
     )
 
     current_settings = (
-        f"<b>Staff Chat</b>: {staff_chat_title}\n\n"
-        f"<b>Assessment Form Link</b>: {assessment_form_link}"
+        f"<b>Staff Chat</b> 👥: {staff_chat_title}.\n\n"
+        f"<b>Assessment Form Link</b> 📋: {assessment_form_link}.\n\n"
+        f"<b>General Assembly Chat</b> 👥: {ga_chat_title}."
     )
     return current_settings
 
@@ -89,7 +106,7 @@ async def start_handler(client: Client, message: types.Message, db_client: Mongo
 
     reply_text = (
         f"Hello {admin.first_name}!, How is work going in MASA office?\n\n"
-        "<b>Bot current settings</b>:\n\n"
+        "<b><u>Bot Current Settings</u></b>:\n\n"
         f"{await current_settings(client, db_client)}"
     )
 
@@ -172,7 +189,7 @@ async def set_staff_chat_handler(
     except errors.ChatWriteForbidden:
         await staff_chat_message.reply(
             "Please give the bot the right to send messages in staff group and try again ❌\n\n"
-            "<b>Bot current settings</b>:\n\n"
+            "<b><u>Bot Current Settings</u></b>:\n\n"
             f"{await current_settings(client, db_client)}",
             reply_markup=admin_keyboard(is_super_admin),
         )
@@ -180,9 +197,139 @@ async def set_staff_chat_handler(
 
     await staff_chat_message.reply(
         f"{staff_chat.title} has been set as the new staff chat ✅\n\n"
-        "<b>Bot current settings</b>:\n\n"
+        "<b><u>Bot Current Settings</u></b>:\n\n"
         f"{await current_settings(client, db_client)}",
         reply_markup=admin_keyboard(is_super_admin),
+    )
+
+
+async def set_assesment_form_link_handler(
+    client: Client, callback_query: types.CallbackQuery, db_client: MongoClient
+):
+    await callback_query.message.edit_text(
+        "Please send the assessment form link", reply_markup=back_keyboard()
+    )
+
+    admin = callback_query.from_user
+    try:
+        assesssment_form_link_message = await client.listen(
+            filters.text, chat_id=admin.id
+        )
+    except (errors.ListenerStopped, asyncio.TimeoutError):
+        return
+
+    form_link = assesssment_form_link_message.text
+
+    confirm_button = types.InlineKeyboardButton(
+        "Confirm ✅", callback_data="confirm_assessment_form_set"
+    )
+    cancel_button = types.InlineKeyboardButton(
+        "Cancel ❌", callback_data="cancel_assessment_form_set"
+    )
+    options_keyboard = types.InlineKeyboardMarkup([[confirm_button], [cancel_button]])
+
+    await callback_query.message.delete()
+
+    await assesssment_form_link_message.reply(
+        "Are you sure you want to set:\n\n"
+        f"{form_link}\n\n"
+        "As the new assesssment form link?",
+        reply_markup=options_keyboard,
+    )
+
+    while True:
+        try:
+            callback_answer = await client.listen(
+                filters=filters.regex(
+                    r"^confirm_assessment_form_set$|^cancel_assessment_form_set$"
+                ),
+                chat_id=admin.id,
+                user_id=admin.id,
+                listener_type=enums.ListenerTypes.CALLBACK_QUERY,
+            )
+        except (errors.ListenerStopped, asyncio.TimeoutError):
+            return
+
+        if callback_answer and callback_answer.data == "confirm_assessment_form_set":
+            db_client.masaBotDB.config.update_one(
+                {}, {"$set": {"assessment_form_link": form_link}}
+            )
+
+            super_admin_id = db_client.masaBotDB.config.find_one(
+                {}, {"super_admin_id"}
+            )["super_admin_id"]
+            is_super_admin = admin.id == super_admin_id
+            return await callback_answer.message.edit_text(
+                "New assessment form link has been set succefully ✅\n\n",
+                reply_markup=back_keyboard(),
+            )
+
+        elif callback_answer.data == "cancel_assessment_form_set":
+            return await back_handler(client, callback_answer, db_client)
+
+
+async def set_ga_chat_handler(
+    client: Client, callback_query: types.CallbackQuery, db_client: MongoClient
+):
+    admin = callback_query.from_user
+
+    await callback_query.message.delete()
+    chat_criteria = types.RequestPeerTypeChat(is_bot_participant=True)
+    request_group_button = types.KeyboardButton(
+        text="Choose group", request_chat=chat_criteria
+    )
+    remove_button = types.KeyboardButton(text="Remove GA membership check")
+    cancel_button = types.KeyboardButton(text="Cancel")
+
+    request_group_keyboard = types.ReplyKeyboardMarkup(
+        [[request_group_button], [remove_button], [cancel_button]],
+        one_time_keyboard=True,
+        resize_keyboard=True,
+    )
+
+    await client.send_message(
+        admin.id,
+        "Please use the buttons to change or remove the general assembly group chat (the bot must be in the group)\n\n"
+        "<b><u>WARNING</u>: REMOVING THE GA GROUP CHECK WILL DISABLE THE GENERAL ASSEMBLY GROUP CHECK AND ANY USER CAN USE THE BOT.</b>",
+        reply_markup=request_group_keyboard,
+    )
+    while True:
+        try:
+            ga_chat_message = await client.listen(
+                chat_id=callback_query.from_user.id,
+                user_id=callback_query.from_user.id,
+            )
+        except (errors.ListenerStopped, asyncio.TimeoutError):
+            return
+
+        if not ga_chat_message or (
+            ga_chat_message.text not in ["Cancel", "Remove GA membership check"]
+            and not ga_chat_message.chats_shared
+        ):
+            await ga_chat_message.reply("Please use one of the buttons.")
+            continue
+
+        elif ga_chat_message.text == "Remove GA membership check":
+            db_client.masaBotDB.config.update_one({}, {"$set": {"ga_chat_id": None}})
+            return await ga_chat_message.reply(
+                "General assembly memebership check is disabled ✅\n\n"
+                "Anyone can use the bot now, to re-enable the check set a GA group chat."
+            )
+
+        elif ga_chat_message.text == "Cancel":
+            return await start_handler(client, ga_chat_message, db_client)
+
+        ga_chat_id = ga_chat_message.chats_shared.chats[0].chat_id
+        db_client.masaBotDB.config.update_one({}, {"$set": {"ga_chat_id": ga_chat_id}})
+        break
+
+    ga_chat = await client.get_chat(ga_chat_id)
+
+    await ga_chat_message.reply(
+        f"<b>{ga_chat.title}</b> has been set as the new general assembly chat ✅\n\n"
+        "Only members of this chat can use the bot, to disable the check:\n"
+        'in the admin panel press "Set General Assembly Group" > "Remove GA membership check"',
+        reply_markup=back_keyboard(),
     )
 
 
@@ -242,7 +389,7 @@ async def set_assesment_form_link_handler(
             is_super_admin = admin.id == super_admin_id
             return await callback_answer.message.edit_text(
                 "New assessment form link has been set succefully ✅\n\n",
-                reply_markup=back_keyboard(is_super_admin),
+                reply_markup=back_keyboard(),
             )
 
         elif callback_answer.data == "cancel_assessment_form_set":
@@ -653,7 +800,7 @@ async def back_handler(
     )
 
     settings = (
-        "<b><u>Bot current settings</u></b>:\n\n"
+        "<b><u>Bot Current Settings</u></b>:\n\n"
         f"{await current_settings(client, db_client)}"
     )
 
