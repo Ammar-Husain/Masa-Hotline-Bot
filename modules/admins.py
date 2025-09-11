@@ -313,7 +313,8 @@ async def set_ga_chat_handler(
             db_client.masaBotDB.config.update_one({}, {"$set": {"ga_chat_id": None}})
             return await ga_chat_message.reply(
                 "General assembly memebership check is disabled ✅\n\n"
-                "Anyone can use the bot now, to re-enable the check set a GA group chat."
+                "Anyone can use the bot now, to re-enable the check set a GA group chat.",
+                reply_markup=back_keyboard(),
             )
 
         elif ga_chat_message.text == "Cancel":
