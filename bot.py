@@ -107,11 +107,15 @@ async def main() -> None:
 
     admin_chat_filter = filters.create(is_admin)
 
-    def not_banned(_, __, update):
+    def not_banned(_, client, update):
         banned_users = db_client.masaBotDB.config.find_one({}, {"banned_users": 1})[
             "banned_users"
         ]
-        return update.from_user and update.from_user.id not in banned_users
+        return bool(
+            update.from_user
+            and update.from_user.id not in banned_users
+            and update.from_user.id != client.me.id
+        )
 
     bot_user_filter = filters.create(not_banned) & ~admin_chat_filter
 
