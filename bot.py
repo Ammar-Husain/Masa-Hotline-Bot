@@ -27,8 +27,10 @@ API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 DB_URI = os.getenv("DB_URI", "")
-ADMIN_ID = os.getenv("ADMIN_ID")
+ADMIN_ID = os.getenv("ADMIN_ID", "")
 
+if ADMIN_ID.isnumeric():
+    ADMIN_ID = int(ADMIN_ID)
 
 # the url of the service in hosting platform
 SERVICE_URL = os.getenv("SERVICE_URL")
@@ -67,7 +69,7 @@ async def main() -> None:
                 ADMIN_ID,
                 "Hey Admin!\n"
                 "Congratulation, The bot has been started for the first time 🥳\n"
-                "Let's set staff group and assessment form link, please send /start.",
+                "Let's set staff group, assessment form link and a general assembly chat if you wanted!, please send /start.",
             )
         except Exception as e:
             await log(client, f"could not message the admin, it says: {e}")
