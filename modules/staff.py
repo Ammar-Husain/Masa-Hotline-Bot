@@ -15,7 +15,7 @@ async def reply_handler(client: Client, message: types.Message, db_client: Mongo
             "/reply <i>serial_number</i> <i>message</i>\n\n"
             "For example:\n"
             "/reply 1 مرحباً، يمكنك التواصل مع اختصاصي على الرقم التالي 01xxxxxxx\n\n"
-            'this will send:\n"<b>مرحاباً، يمكنك التواصل مع اختصاصي على الرقم التالي 01xxxxxxx</b>"\n to the user with serial number 1.'
+            'this will send:\n"<b>مرحباً، يمكنك التواصل مع اختصاصي على الرقم التالي 01xxxxxxx</b>"\n to the user with serial number <b>1</b>.'
         )
 
     serial_number, reply_text = text_match.groups()
@@ -81,7 +81,7 @@ async def reply_handler(client: Client, message: types.Message, db_client: Mongo
             )
             return await callback_answer.message.edit_text(
                 f"""
-                    Reply sent to the user {user_name} succefully ✅"
+                    Reply sent to the user {user_name} succefully ✅
                 """
             )
 

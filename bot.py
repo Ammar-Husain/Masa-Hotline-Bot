@@ -142,6 +142,10 @@ async def main() -> None:
     async def _(client, callback_query):
         await users.back_handler(client, callback_query, db_client)
 
+    @client.on_message(bot_user_filter & filters.text)
+    async def _(client, message):
+        await users.text_handler(message)
+
     # Staff-Bot interaction
     @client.on_message(staff_chat_filter & filters.command("reply"))
     async def _(client, message):

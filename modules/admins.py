@@ -14,7 +14,7 @@ def admin_keyboard(is_super_admin: bool = False):
     )
 
     set_ga_chat_button = types.InlineKeyboardButton(
-        "Set General Assembly Group  👥", "set_ga_chat"
+        "Set General Assembly Chat  👥", "set_ga_chat"
     )
 
     broadcast_button = types.InlineKeyboardButton(
