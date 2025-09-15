@@ -67,9 +67,9 @@ async def main() -> None:
         try:
             await client.send_message(
                 ADMIN_ID,
-                "Hey Admin!\n"
-                "Congratulation, The bot has been started for the first time 🥳\n"
-                "Let's set staff group, assessment form link and a general assembly chat if you wanted!, please send /start.",
+                "Hey Admin!\n\n"
+                "<b>Congratulation, The bot has been started for the first time 🥳</b>\n\n\n"
+                "Let's set staff group, assessment form link and a general assembly chat if you want, please send /start.",
             )
         except Exception as e:
             await log(client, f"could not message the admin, it says: {e}")
