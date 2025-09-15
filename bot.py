@@ -117,7 +117,7 @@ async def main() -> None:
             and update.from_user.id != client.me.id
         )
 
-    bot_user_filter = filters.create(not_banned) & ~admin_chat_filter
+    bot_user_filter = filters.private & filters.create(not_banned) & ~admin_chat_filter
 
     def is_staff_chat(_, __, update):
         config = db_client.masaBotDB.config.find_one({})
