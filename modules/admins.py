@@ -3,6 +3,8 @@ import asyncio
 from pymongo import MongoClient
 from pyrogram import Client, enums, errors, filters, types
 
+from utils.log import log
+
 
 def admin_keyboard(is_super_admin: bool = False):
     set_staff_chat_button = types.InlineKeyboardButton(
@@ -67,7 +69,8 @@ async def current_settings(client: Client, db_client: MongoClient):
         try:
             staff_chat = await client.get_chat(config["staff_chat_id"])
             staff_chat_title = staff_chat.title
-        except:
+        except Exception as e:
+            await log(client, f"Staff chat not Accesible, it says: {e}")
             staff_chat_title = "Not Accesible."
 
     else:
@@ -77,7 +80,8 @@ async def current_settings(client: Client, db_client: MongoClient):
         try:
             ga_chat = await client.get_chat(config["ga_chat_id"])
             ga_chat_title = ga_chat.title
-        except:
+        except Exception as e:
+            await log(client, f"GA chat not Accesible, it says: {e}")
             ga_chat_title = "Not Accesible."
 
     else:

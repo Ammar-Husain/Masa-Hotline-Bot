@@ -43,7 +43,7 @@ client: Client = Client(
 db_client = connect_to_db(DB_URI)
 # Use a test database for development
 if not is_production:
-    db_client = db_client.test
+    db_client = db_client.test1
 
 
 async def main() -> None:
