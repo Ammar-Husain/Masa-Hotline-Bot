@@ -465,7 +465,7 @@ async def broadcast_handler(
                     print(e)
 
             await mess_to_brod.reply(
-                f"This message has been succefully broadcated to {sent} of bot users  ✅",
+                f"This message has been succefully broadcasted to {sent} of bot users  ✅",
                 reply_markup=back_keyboard(),
                 quote=True,
             )
@@ -497,7 +497,10 @@ async def ban_user_handler(
             return
 
         elif not user_serial_message.text.isnumeric():
-            await user_serial_message.reply("Please send a valid number or /cancel")
+            await user_serial_message.reply(
+                "Please send a valid serial number, you can try again.",
+                reply_markup=back_keyboard(),
+            )
             continue
 
         user_in_db = db_client.masaBotDB.users.find_one(
@@ -506,7 +509,8 @@ async def ban_user_handler(
 
         if not user_in_db:
             await user_serial_message.reply(
-                f"There is no a bot user with the serial number: {user_serial_message.text}"
+                f"There is no a bot user with the serial number: {user_serial_message.text}, you can try again.",
+                reply_markup=back_keyboard(),
             )
             continue
         user_name = f"<b>#{user_in_db['serial_number']}{' ('+user_in_db['custom_name']+')' if user_in_db['custom_name'] else ''}</b>"

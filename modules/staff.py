@@ -167,7 +167,7 @@ async def help_handler(message: types.Message):
     await message.reply(
         "<b><u>Bot Manual:</u></b>\n\n"
         "<b>Hotline workflow is as follow:</b>\n\n"
-        "- A user who need help starts me and if he/she is a member of KMSA community I will give him the assessment form to fill else I will aplogize politely.\n\n"
+        "- A user who need help starts me and if he/she is a member of KMSA community I will give him the assessment form to fill else I will aoplogize politely.\n\n"
         "- When the user t<b>ells me</b> that he filled the form, I will tell you in this chat to go check his response and reply to him with the /reply command.\n\n"
         "- The user who filled the form can conact you at any time through me and you can reply to him with the /reply command.\n\n"
         "- You can assign <b>custom names</b> to users, these names will not visible for them.\n\n"

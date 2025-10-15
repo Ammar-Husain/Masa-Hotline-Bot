@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import signal
 
@@ -18,6 +19,10 @@ if not is_production or is_production == "0":
     import dotenv
 
     dotenv.load_dotenv()
+
+# disable flask development server logging
+logger = logging.getLogger("werkzeug")
+logger.disabled = True
 
 # this is to prevent the service from sleeping in free hostings ervices
 run_server()
@@ -260,9 +265,13 @@ async def main() -> None:
     async def keep_up():
         m = await ping_server()
         while True:
-            await asyncio.sleep(60)
-            await m.delete()
-            m = await ping_server()
+            try:
+                await asyncio.sleep(60)
+                await m.delete()
+                m = await ping_server()
+            except Exception as e:
+                await log(client, str(e))
+                pass
 
     asyncio.create_task(keep_up())
     await idle()
