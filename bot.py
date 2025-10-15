@@ -22,7 +22,7 @@ if not is_production or is_production == "0":
 
 # disable flask development server logging
 logger = logging.getLogger("werkzeug")
-logger.disabled = True
+logger.setLevel(logging.WARNING)
 
 # this is to prevent the service from sleeping in free hostings ervices
 run_server()
