@@ -52,7 +52,10 @@ if not is_production:
 
 
 async def main() -> None:
-    await client.start()
+    try:
+        await client.start()
+    except ConnectionError:
+        await log(client, "Calling main function again..")
 
     # set commands for users
     await client.set_bot_commands(
@@ -246,6 +249,7 @@ async def main() -> None:
         signal.signal(signal.SIGTERM, handle_sigterm)
         signal.signal(signal.SIGINT, handle_sigterm)
 
+        await log(client, "Bot is up and running.")
         await shutdown_event.wait()
         await client.stop()
 
@@ -274,7 +278,15 @@ async def main() -> None:
                 pass
 
     asyncio.create_task(keep_up())
-    await idle()
+    try:
+        await idle()
+    except Exception as e:
+        try:
+            await log(client, f"Bot crashed due to {e}")
+        except:
+            print(f"Bot crashed due to {e}")
+
+        return await main()
 
 
 if __name__ == "__main__":
