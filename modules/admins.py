@@ -178,6 +178,9 @@ async def set_staff_chat_handler(
         await client.set_bot_commands(
             [
                 types.BotCommand("reply", "send a reply to a bot user"),
+                types.BotCommand(
+                    "send", "send a message to a bot user (can contain media and files)"
+                ),
                 types.BotCommand("assign", "assign a custom name to a bot user"),
                 types.BotCommand("help", "show bot manual"),
             ],

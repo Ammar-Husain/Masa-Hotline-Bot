@@ -48,7 +48,7 @@ client: Client = Client(
 db_client = connect_to_db(DB_URI)
 # Use a test database for development
 if not is_production:
-    db_client = db_client.test1
+    db_client = db_client.test2
 
 
 async def main() -> None:
@@ -87,17 +87,23 @@ async def main() -> None:
         admins_list = config["admins_list"]
         if not config["staff_chat_id"]:
             for admin_id in admins_list:
-                await client.send_message(
-                    admin_id,
-                    "Hey!, staff group is not set!, please send /start to set it.",
-                )
+                try:
+                    await client.send_message(
+                        admin_id,
+                        "Hey!, staff group is not set!, please send /start to set it.",
+                    )
+                except:
+                    await log(client, f"Failed to message admin {admin_id}")
 
         if not config["assessment_form_link"]:
             for admin_id in admins_list:
-                await client.send_message(
-                    admin_id,
-                    "Hey!, assessment form link is not set!, please send /start to set it.",
-                )
+                try:
+                    await client.send_message(
+                        admin_id,
+                        "Hey!, assessment form link is not set!, please send /start to set it.",
+                    )
+                except:
+                    await log(client, f"Failed to message admin {admin_id}")
 
     # create statistics documnet in the first bot run
     statistics = db_client.masaBotDB.statistics.find_one({})
@@ -164,6 +170,10 @@ async def main() -> None:
     @client.on_message(staff_chat_filter & filters.command("reply"))
     async def _(client, message):
         await staff.reply_handler(client, message, db_client)
+
+    @client.on_message(staff_chat_filter & filters.command("send"))
+    async def _(client, message):
+        await staff.send_handler(client, message, db_client)
 
     @client.on_message(staff_chat_filter & filters.command("assign"))
     async def _(client, message):
